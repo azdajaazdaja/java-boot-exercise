@@ -1,16 +1,22 @@
 package com.exercise.service;
 
 import static com.exercise.generated.public_.tables.Measurement.MEASUREMENT;
+import static com.exercise.generated.public_.tables.MedianNoise.MEDIAN_NOISE;
 import static com.exercise.generated.public_.tables.Sensor.SENSOR;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Collection;
 
 import org.jooq.DSLContext;
+import org.jooq.Record2;
+import org.jooq.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.exercise.generated.public_.tables.records.MeasurementRecord;
+import com.exercise.generated.public_.tables.records.MedianNoiseRecord;
 import com.exercise.generated.public_.tables.records.SensorRecord;
 import com.exercise.model.Measurement;
 import com.exercise.model.Sensor;;
@@ -45,5 +51,21 @@ public class SensorService {
     	measurementRecord.store();
     }
     
-
+    @Transactional
+    public void calculateAndAddMedianNoise(Timestamp startTime, Timestamp endTime) {    	
+    	Result<Record2<Long, BigDecimal>>  medianValues =
+    	create.select(MEASUREMENT.SENSOR_ID,MEASUREMENT.VALUE.avg())
+    	      .from(MEASUREMENT)
+    	      .where(MEASUREMENT.VALUE.between(BigDecimal.valueOf(startTime.getTime())).and(BigDecimal.valueOf(endTime.getTime())))
+    	      .groupBy(MEASUREMENT.SENSOR_ID).fetch();
+    	medianValues.stream().forEach(record -> {
+    		MedianNoiseRecord medianNoiseRecord = create.newRecord(MEDIAN_NOISE);
+    		medianNoiseRecord.setSensorId(Long.parseLong(record.get("SENSOR_ID").toString()));
+    		medianNoiseRecord.setValue(new BigDecimal(record.get("avg").toString()));
+    		medianNoiseRecord.setStartTimestamp(startTime);
+    		medianNoiseRecord.setEndTimestamp(endTime);
+    		medianNoiseRecord.store();
+    	});
+    }
+    
 }
