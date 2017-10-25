@@ -56,7 +56,7 @@ public class SensorService {
     	Result<Record2<Long, BigDecimal>>  medianValues =
     	create.select(MEASUREMENT.SENSOR_ID,MEASUREMENT.VALUE.avg())
     	      .from(MEASUREMENT)
-    	      .where(MEASUREMENT.VALUE.between(BigDecimal.valueOf(startTime.getTime())).and(BigDecimal.valueOf(endTime.getTime())))
+    	      .where(MEASUREMENT.TIMESTAMP.between(startTime).and(endTime))
     	      .groupBy(MEASUREMENT.SENSOR_ID).fetch();
     	medianValues.stream().forEach(record -> {
     		MedianNoiseRecord medianNoiseRecord = create.newRecord(MEDIAN_NOISE);
