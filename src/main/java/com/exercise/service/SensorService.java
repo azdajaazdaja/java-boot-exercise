@@ -7,6 +7,8 @@ import static com.exercise.generated.public_.tables.Sensor.SENSOR;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.jooq.DSLContext;
 import org.jooq.Record2;
@@ -68,4 +70,18 @@ public class SensorService {
     	});
     }
     
+    @Transactional
+    public List<Object> getMedianValues(Long id, Timestamp start, Timestamp end) {
+    	Result<Record2<Long, BigDecimal>> medianValues =
+    			create.select(MEDIAN_NOISE.SENSOR_ID, MEDIAN_NOISE.VALUE)
+    				  .from(MEDIAN_NOISE)
+    				  .where(MEDIAN_NOISE.START_TIMESTAMP.between(start).and(end))
+    				  .and(MEDIAN_NOISE.SENSOR_ID.equal(id)).fetch();
+    	return medianValues.stream()
+    					   .map(record -> new Object () {	
+		                                	   				BigDecimal value = new BigDecimal(record.get("VALUE").toString()); 
+		                                   					Timestamp timestamp = (Timestamp)(record.get("TIMESTAMP"));
+		                                   				})
+    					   .collect(Collectors.toList());
+    }
 }

@@ -1,13 +1,17 @@
 package com.exercise.rest;
 
+import java.sql.Timestamp;
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.exercise.model.Measurement;
 import com.exercise.model.Sensor;
@@ -43,4 +47,13 @@ public class SensorResource {
 		sensorService.addMeasurement(measurement);
 		return ResponseEntity.ok().build();
 	}
+	
+	@RequestMapping(
+			value = "/medianvalue/{id}/{start}/{end}",
+			method = RequestMethod.GET
+			)
+	ResponseEntity getSensorMedianValues(@PathVariable Long id, @PathVariable Timestamp start, @PathVariable Timestamp end) {
+		List<Object> medianValues = sensorService.getMedianValues(id, start, end);
+		return ResponseEntity.ok(medianValues);
+}	
 }
