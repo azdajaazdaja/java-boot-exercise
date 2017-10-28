@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.exercise.UtilMethods;
 import com.exercise.generated.public_.tables.records.MeasurementRecord;
 import com.exercise.generated.public_.tables.records.MedianNoiseRecord;
 import com.exercise.generated.public_.tables.records.SensorRecord;
@@ -24,7 +25,7 @@ import com.exercise.model.Measurement;
 import com.exercise.model.Sensor;;
 
 @Service
-public class SensorService {
+public class SensorService extends UtilMethods{
 
     @Autowired
     private DSLContext create;
@@ -54,20 +55,29 @@ public class SensorService {
     }
     
     @Transactional
-    public void calculateAndAddMedianNoise(Timestamp startTime, Timestamp endTime) {    	
-    	Result<Record2<Long, BigDecimal>>  medianValues =
-    	create.select(MEASUREMENT.SENSOR_ID,MEASUREMENT.VALUE.avg())
-    	      .from(MEASUREMENT)
-    	      .where(MEASUREMENT.TIMESTAMP.between(startTime).and(endTime))
-    	      .groupBy(MEASUREMENT.SENSOR_ID).fetch();
-    	medianValues.stream().forEach(record -> {
-    		MedianNoiseRecord medianNoiseRecord = create.newRecord(MEDIAN_NOISE);
-    		medianNoiseRecord.setSensorId(Long.parseLong(record.get("SENSOR_ID").toString()));
-    		medianNoiseRecord.setValue(new BigDecimal(record.get("avg").toString()));
-    		medianNoiseRecord.setStartTimestamp(startTime);
-    		medianNoiseRecord.setEndTimestamp(endTime);
-    		medianNoiseRecord.store();
-    	});
+    public void calculateAndAddMedianNoise(Timestamp startTime, Timestamp endTime) {    	    	
+    	create.select()
+		      .from(SENSOR)
+		      .fetch()
+		      .getValues(SENSOR.ID)
+    		  .forEach(
+    				  sensorID -> {
+    					  List<BigDecimal> sensorsValues =
+    							  create.select()
+    				    	      	.from(MEASUREMENT)
+    				    	      	.where(MEASUREMENT.TIMESTAMP.between(startTime).and(endTime))
+    				    	      	.and(MEASUREMENT.ID.eq(sensorID))
+    				    	      	.fetch().getValues(MEASUREMENT.VALUE);
+    					  if(!sensorsValues.isEmpty()) {
+    						  MedianNoiseRecord medianNoiseRecord = create.newRecord(MEDIAN_NOISE);
+    						  medianNoiseRecord.setSensorId(sensorID);
+    						  medianNoiseRecord.setValue(new BigDecimal(median(sensorsValues).toString()));
+    						  medianNoiseRecord.setStartTimestamp(startTime);
+    						  medianNoiseRecord.setEndTimestamp(endTime);
+    						  medianNoiseRecord.store();
+    					  }
+    				  }
+    		);
     }
     
     @Transactional
