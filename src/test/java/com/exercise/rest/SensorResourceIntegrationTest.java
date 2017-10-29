@@ -41,7 +41,7 @@ public class SensorResourceIntegrationTest {
     }
 
     @Test
-    public void should_add_new_sensor() {
+    public void should_add_sensor() {
         // add sensor
         given().
                 contentType(JSON).
@@ -59,9 +59,22 @@ public class SensorResourceIntegrationTest {
                 statusCode(OK.value()).
                 body("sensorId", hasItems("sensor-teststreet-1"));
     }
+    
+    @Test
+    public void shoud_return_preconfigured_measurements() {
+    	when().
+    			get("/sensors/measurements").
+    	then().
+    			statusCode(OK.value()).
+    			body("sensorId", hasItems(1, 2, 3)).
+    			body("value", hasItems(30.1f, 27.6f, 55.4f, 32.7f, 47.2f, 34.4f)).
+    			body("timestamp", hasItems(hasToString(Long.toString(Timestamp.valueOf("2017-09-17 18:45:00.000").getTime())),
+    					                   hasToString(Long.toString(Timestamp.valueOf("2017-09-17 18:50:00.000").getTime()))
+    					                   ));
+    }
 
     @Test
-    public void should_add_Measurement() {
+    public void should_add_measurement() {
     	// add measurement
     	given().
     			contentType(JSON).
@@ -80,5 +93,21 @@ public class SensorResourceIntegrationTest {
         		body("value", hasItems(hasToString("55.7"))).
         		body("timestamp", hasItems(hasToString(Long.toString(Timestamp.valueOf("2017-09-18 02:00:00.000").getTime()))));	
     }
+    
+    @Test
+    public void should_return_preconfigured_get_sensor_median_values() {
+    	given().
+    		get("/sensors/medianvalue/1/2017-09-17 18:00:00.000/2017-09-17 19:59:59.999").
+    	then().
+    		statusCode(OK.value()).
+    		body("value", hasItems(30.5f, 40.5f)).
+    	    body("timestamp", hasItems(Timestamp.valueOf("2017-09-17 18:00:00.000").getTime(),
+    	    		                   Timestamp.valueOf("2017-09-17 19:00:00.000").getTime()
+    	    	                      )
+    	    	);
+    	    
+    }
+    
+    
     
 }
