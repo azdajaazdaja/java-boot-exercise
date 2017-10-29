@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.jooq.DSLContext;
-import org.jooq.Record2;
+import org.jooq.Record3;
 import org.jooq.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +21,7 @@ import com.exercise.UtilMethods;
 import com.exercise.generated.public_.tables.records.MeasurementRecord;
 import com.exercise.generated.public_.tables.records.MedianNoiseRecord;
 import com.exercise.generated.public_.tables.records.SensorRecord;
+import com.exercise.mapper.MedianValueMapper;
 import com.exercise.model.Measurement;
 import com.exercise.model.Sensor;;
 
@@ -81,17 +82,17 @@ public class SensorService extends UtilMethods{
     }
     
     @Transactional
-    public List<Object> getMedianValues(Long id, Timestamp start, Timestamp end) {
-    	Result<Record2<Long, BigDecimal>> medianValues =
-    			create.select(MEDIAN_NOISE.SENSOR_ID, MEDIAN_NOISE.VALUE)
+    public List<MedianValueMapper> getMedianValues(Long id, Timestamp start, Timestamp end) {
+    	Result<Record3<Long, BigDecimal, Timestamp>> medianValues =
+    			create.select(MEDIAN_NOISE.SENSOR_ID, MEDIAN_NOISE.VALUE, MEDIAN_NOISE.START_TIMESTAMP)
     				  .from(MEDIAN_NOISE)
     				  .where(MEDIAN_NOISE.START_TIMESTAMP.between(start).and(end))
     				  .and(MEDIAN_NOISE.SENSOR_ID.equal(id)).fetch();
     	return medianValues.stream()
-    					   .map(record -> new Object () {	
-		                                	   				BigDecimal value = new BigDecimal(record.get("VALUE").toString()); 
-		                                   					Timestamp timestamp = (Timestamp)(record.get("TIMESTAMP"));
-		                                   				})
+    					   .map(record -> new MedianValueMapper (new BigDecimal(record.get("VALUE").toString()),
+		                                   					     (Timestamp)(record.get("START_TIMESTAMP"))
+		                                   				        )
+    						    )
     					   .collect(Collectors.toList());
     }
 }

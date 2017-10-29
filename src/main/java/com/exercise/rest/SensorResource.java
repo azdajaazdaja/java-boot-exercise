@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.exercise.mapper.MedianValueMapper;
 import com.exercise.model.Measurement;
 import com.exercise.model.Sensor;
 import com.exercise.service.SensorService;
@@ -52,8 +54,9 @@ public class SensorResource {
 			value = "/medianvalue/{id}/{start}/{end}",
 			method = RequestMethod.GET
 			)
+	@ResponseBody
 	ResponseEntity getSensorMedianValues(@PathVariable Long id, @PathVariable Timestamp start, @PathVariable Timestamp end) {
-		List<Object> medianValues = sensorService.getMedianValues(id, start, end);
+		List<MedianValueMapper> medianValues = sensorService.getMedianValues(id, start, end);
 		return ResponseEntity.ok(medianValues);
 }	
 }
